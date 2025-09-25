@@ -63,13 +63,68 @@
 	};
 };
 
-&bam_dmux {
-	status = "okay";
+/* --- Overwrite the original CPU OPP table directly --- */
+&cpu_opp_table {
+	/* Delete original operating points */
+	/delete-node/ opp-200000000;
+	/delete-node/ opp-400000000;
+	/delete-node/ opp-800000000;
+	/delete-node/ opp-998400000;
+
+	/* Add new operating points */
+	opp-384000000 { opp-hz = /bits/ 64 <384000000>; };
+	opp-787200000 { opp-hz = /bits/ 64 <787200000>; };
+	opp-998400000 { opp-hz = /bits/ 64 <998400000>; };
+	opp-1094400000 { opp-hz = /bits/ 64 <1094400000>; };
+	opp-1152000000 { opp-hz = /bits/ 64 <1152000000>; };
+	opp-1209600000 { opp-hz = /bits/ 64 <1209600000>; };
+	opp-1248000000 { opp-hz = /bits/ 64 <1248000000>; };
+	opp-1363200000 { opp-hz = /bits/ 64 <1363200000>; };
+	opp-1401600000 { opp-hz = /bits/ 64 <1401600000>; };
+	opp-1612800000 { opp-hz = /bits/ 64 <1612800000>; };
+	opp-1843200000 { opp-hz = /bits/ 64 <1843200000>; };
+	opp-1977600000 { opp-hz = /bits/ 64 <1977600000>; };
+	opp-2112000000 { opp-hz = /bits/ 64 <2112000000>; };
 };
 
-&bam_dmux_dma {
-	status = "okay";
-};
+/* --- Hardware Disable Overrides --- */
+/*
+ * Disable reserved memory regions instead of deleting them.
+ * This keeps their labels valid for references elsewhere in the dtsi files,
+ * but tells the kernel not to reserve the actual memory.
+ */
+&mpss_mem { status = "disabled"; };
+&venus_mem { status = "disabled"; };
+&mba_mem { status = "disabled"; };
+&gps_mem { status = "disabled"; };
+
+/* 1. Disable Video and Display Subsystems */
+&venus { status = "disabled"; };
+&mdss { status = "disabled"; };
+&gpu { status = "disabled"; };
+
+/* 2. Disable Camera Subsystems */
+&camss { status = "disabled"; };
+&cci { status = "disabled"; };
+
+/* 3. Disable Modem (Cellular) and GPS */
+&mpss { status = "disabled"; };
+&bam_dmux { status = "disabled"; };
+&bam_dmux_dma { status = "disabled"; };
+
+/* 4. Disable Audio Subsystems */
+&sound { status = "disabled"; };
+&lpass_codec { status = "disabled"; };
+&pm8916_codec { status = "disabled"; };
+
+/* 5. Disable Touchscreen (Generic - UFI devices typically lack this) */
+/*
+ * Note: Touchscreen nodes are board-specific. If one were defined
+ * for a UFI device, it would be disabled here. Since none is defined,
+ * no action is needed.
+ */
+
+/* --- Hardware Enable Section --- */
 
 &blsp_uart2 {
 	status = "okay";
@@ -78,19 +133,6 @@
 /* Remove &mdss_dsi0_phy from clocks to make sure that gcc probes with display disabled */
 &gcc {
 	clocks = <&xo_board>, <&sleep_clk>, <0>, <0>, <0>, <0>, <0>;
-};
-
-&mba_mem {
-	status = "okay";
-};
-
-&mpss {
-	status = "okay";
-};
-
-&mpss_mem {
-	reg = <0x0 0x86800000 0x0 0x5500000>;
-	status = "okay";
 };
 
 &pm8916_usbin {
@@ -112,14 +154,7 @@
 	extcon = <&pm8916_usbin>;
 };
 
-&venus {
-	status = "okay";
-};
-
-&venus_mem {
-	status = "okay";
-};
-
+/* Wi-Fi related nodes are left enabled as requested */
 &wcnss {
 	status = "okay";
 };
@@ -145,3 +180,4 @@
 		bias-disable;
 	};
 };
+
